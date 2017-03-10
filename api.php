@@ -18,8 +18,33 @@ $pass = $_POST['pass'];
 $respJson->platformName = $GLOBALS['PLATFORM_NAME'];
 
 if (is_null($user) || is_null($pass)){
-	$respJson->error = -1;
-	$respJson->errorDesc = "No username or password specified.";
+	$respJson->code = -1;
+	$respJson->desc = "No username or password specified.";
 	die(json_encode($respJson));
 }
+
+$result = $conn->query("SELECT user, pass FROM " + $GLOBALS['DB_TABLE_USERS']);
+
+if ($users->num_row == 0){
+	$respJson->code = -2;
+	$respJson->desc = "No users in the database.";
+	die(json_encode($respJson));
+}
+
+$validated = false;
+$pwdHash = hash('sha512', $pass);
+while ($usrRow = $users->fetch_assoc()){
+	if ($usrRow["user"] === $user){
+		validated = $usrRow["pass"] === $pwdHash;
+		break;
+	}
+}
+
+if (!validated){
+	$respJson->code = -3;
+	$respJson->desc = "Username or password incorrect";
+	die(json_encode($respJson));
+}
+
+
 ?>
